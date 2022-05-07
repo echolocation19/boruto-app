@@ -13,5 +13,4 @@ import com.example.borutoapp.domain.model.HeroRemoveKey
 abstract class BorutoDatabase : RoomDatabase() {
     abstract fun heroDao(): HeroDao
     abstract fun heroRemoteKeyDao(): HeroRemoteKeyDao
-
 }
