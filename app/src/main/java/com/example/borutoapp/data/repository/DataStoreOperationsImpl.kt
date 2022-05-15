@@ -1,4 +1,4 @@
-package com.example.borutoapp.data.pref
+package com.example.borutoapp.data.repository
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -20,7 +20,7 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = PRE
 class DataStoreOperationsImpl(context: Context): DataStoreOperations {
 
     private object PreferencesKey {
-        val onBoardingKey = booleanPreferencesKey(PREFERENCES_KEY)
+        val onBoardingKey = booleanPreferencesKey(name = PREFERENCES_KEY)
     }
 
     private val dataStore = context.dataStore
@@ -39,7 +39,8 @@ class DataStoreOperationsImpl(context: Context): DataStoreOperations {
                 } else {
                     throw exception
                 }
-            }.map { preferences ->
+            }
+            .map { preferences ->
                 val onBoardingState = preferences[PreferencesKey.onBoardingKey] ?: false
                 onBoardingState
             }
