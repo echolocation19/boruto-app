@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    useCases: UseCases
+    private val useCases: UseCases
 ) : ViewModel() {
     val getAllHeroes = useCases.getAllHeroesUseCase()
 }
