@@ -20,6 +20,18 @@ class HeroRemoteMediator @Inject constructor(
     private val heroDao = borutoDatabase.heroDao()
     private val heroRemoteKeysDao = borutoDatabase.heroRemoteKeysDao()
 
+    override suspend fun initialize(): InitializeAction {
+        val currentTime = System.currentTimeMillis()
+        val lastUpdated = heroRemoteKeysDao.getRemoteKeys(heroId = 1)?.lastUpdated ?: 0L
+        val cacheTimeout = 1440
+        val differenceInMinutes = (currentTime - lastUpdated) / 1000 / 60
+        return if (differenceInMinutes.toInt() <= cacheTimeout) {
+            InitializeAction.SKIP_INITIAL_REFRESH
+        } else {
+            InitializeAction.LAUNCH_INITIAL_REFRESH
+        }
+    }
+
     override suspend fun load(loadType: LoadType, state: PagingState<Int, Hero>): MediatorResult {
         return try {
             val page = when (loadType) {
@@ -58,7 +70,8 @@ class HeroRemoteMediator @Inject constructor(
                         HeroRemoteKeys(
                             id = hero.id,
                             prevPage = prevPage,
-                            nextPage = nextPage
+                            nextPage = nextPage,
+                            lastUpdated = response.lastUpdated
                         )
                     }
                     heroRemoteKeysDao.addAllRemoteKeys(heroRemoteKeys = keys)
@@ -74,13 +87,13 @@ class HeroRemoteMediator @Inject constructor(
     private suspend fun getRemoteKeyForLastItem(state: PagingState<Int, Hero>): HeroRemoteKeys? {
         return state.pages.lastOrNull { it.data.isNotEmpty() }?.data?.lastOrNull()
             ?.let { hero ->
-                heroRemoteKeysDao.getRemoteKeys(id = hero.id)
+                heroRemoteKeysDao.getRemoteKeys(heroId = hero.id)
             }
     }
 
     private suspend fun getRemoteKeyForFirstItem(state: PagingState<Int, Hero>): HeroRemoteKeys? {
         return state.pages.firstOrNull { it.data.isNotEmpty() }?.data?.firstOrNull()?.let { hero ->
-            heroRemoteKeysDao.getRemoteKeys(id = hero.id)
+            heroRemoteKeysDao.getRemoteKeys(heroId = hero.id)
         }
     }
 
@@ -89,7 +102,7 @@ class HeroRemoteMediator @Inject constructor(
     ): HeroRemoteKeys? {
         return state.anchorPosition?.let { position ->
             state.closestItemToPosition(position)?.id?.let { id ->
-                heroRemoteKeysDao.getRemoteKeys(id = id)
+                heroRemoteKeysDao.getRemoteKeys(heroId = id)
             }
         }
     }
